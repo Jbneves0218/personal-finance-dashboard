@@ -89,6 +89,11 @@ function App() {
     return localStorage.getItem('finance_theme') || 'dark'
   })
 
+  // User Name state
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('finance_user_name') || ''
+  })
+
   useEffect(() => {
     localStorage.setItem('finance_incomes', JSON.stringify(incomes))
   }, [incomes])
@@ -101,6 +106,10 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('finance_theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem('finance_user_name', userName)
+  }, [userName])
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark')
@@ -224,8 +233,27 @@ function App() {
           >
             {theme === 'dark' ? <Sun size={20} color="#e3b341" /> : <Moon size={20} color="#4a6ee0" />}
           </button>
-          <h1>Simulador de Orçamento</h1>
-          <p>Planeje seu mês e acompanhe seu saldo em tempo real.</p>
+          <h1>
+            Olá, <input 
+               type="text" 
+               value={userName} 
+               onChange={(e) => setUserName(e.target.value)} 
+               placeholder="Seu nome..." 
+               style={{ 
+                 background: 'transparent', 
+                 border: 'none', 
+                 borderBottom: '2px dashed var(--glass-border)', 
+                 color: 'var(--text)', 
+                 fontSize: 'inherit', 
+                 fontWeight: 'inherit', 
+                 fontFamily: 'inherit',
+                 outline: 'none',
+                 width: userName ? `${Math.max(userName.length + 1, 10)}ch` : '10ch',
+                 transition: 'all 0.2s ease'
+               }} 
+            /> 👋
+          </h1>
+          <p>Seu assistente financeiro. Planeje seu mês e acompanhe seu saldo em tempo real.</p>
         </header>
 
         {/* Categoria Incomes */}
