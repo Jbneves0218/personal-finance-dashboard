@@ -3,7 +3,7 @@ import {
   Plus, Trash2, DollarSign, CreditCard, TrendingUp, WalletCards,
   ShoppingCart, Utensils, Zap, Droplets, Home, Car, Coins,
   CircleDollarSign, FileText, PieChart as PieChartIcon, BarChart2,
-  Sun, Moon, Lightbulb
+  Sun, Moon, Lightbulb, Baby, Film, HeartPulse
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
