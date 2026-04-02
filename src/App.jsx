@@ -54,6 +54,25 @@ const getColorForExpense = (name) => {
   return '#e3b341' // Amarelo escuro padrão
 }
 
+const EXPENSE_CATEGORIES = [
+  { id: 'cat_alimentacao', name: 'Alimentação', icon: Utensils, color: '#d2a8ff' },
+  { id: 'cat_cartao', name: 'Cartão/Fatura', icon: FileText, color: '#f85149' },
+  { id: 'cat_contas', name: 'Contas Fixas', icon: Zap, color: '#a5d6ff' },
+  { id: 'cat_investimento', name: 'Investimento', icon: TrendingUp, color: '#3fb950' },
+  { id: 'cat_pensao', name: 'Pensão/Filhos', icon: Baby, color: '#e3b341' },
+  { id: 'cat_lazer', name: 'Lazer', icon: Film, color: '#ff7b72' },
+  { id: 'cat_transporte', name: 'Transporte', icon: Car, color: '#79c0ff' },
+  { id: 'cat_saude', name: 'Saúde', icon: HeartPulse, color: '#ffbdc6' },
+  { id: 'cat_outros', name: 'Outro gasto...', icon: CircleDollarSign, color: '#7d8590' }
+]
+
+const INCOME_CATEGORIES = [
+  { id: 'inc_salario', name: 'Salário', icon: Coins, color: '#79c0ff' },
+  { id: 'inc_freela', name: 'Freelance', icon: TrendingUp, color: '#3fb950' },
+  { id: 'inc_vendas', name: 'Vendas', icon: ShoppingCart, color: '#d2a8ff' },
+  { id: 'inc_outros', name: 'Outra entrada...', icon: CircleDollarSign, color: '#7d8590' }
+]
+
 function App() {
   const [incomes, setIncomes] = useState(() => {
     const saved = localStorage.getItem('finance_incomes')
@@ -100,13 +119,15 @@ function App() {
     setIncomes(incomes.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
   const addIncome = () => setIncomes([...incomes, { id: generateId(), name: 'Nova Renda', amount: '' }])
+  const addSpecificIncome = (name) => setIncomes([...incomes, { id: generateId(), name: name, amount: '' }])
   const removeIncome = (id) => setIncomes(incomes.filter(item => item.id !== id))
 
   // Handlers para Expenses
   const updateExpense = (id, field, value) => {
     setExpenses(expenses.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
-  const addExpense = () => setExpenses([...expenses, { id: generateId(), name: 'Nova Despesa', amount: '' }])
+  const addExpense = () => setExpenses([...expenses, { id: generateId(), name: 'Nova Conta', amount: '' }])
+  const addSpecificExpense = (name) => setExpenses([...expenses, { id: generateId(), name: name, amount: '' }])
   const removeExpense = (id) => setExpenses(expenses.filter(item => item.id !== id))
 
   const getBalanceClass = () => {
@@ -206,9 +227,25 @@ function App() {
               </div>
             ))}
           </div>
-          <button className="add-btn" onClick={addIncome}>
-            <Plus size={16} /> Adicionar Nova Renda
-          </button>
+          <div className="quick-add-categories">
+            <p className="quick-add-title">Adicionar recebimento rapidamente:</p>
+            <div className="category-chips">
+              {INCOME_CATEGORIES.map(cat => {
+                const Icon = cat.icon;
+                return (
+                  <button 
+                    key={cat.id} 
+                    className="category-chip" 
+                    style={{ '--chip-color': cat.color }}
+                    onClick={() => addSpecificIncome(cat.name)}
+                    title={`Adicionar ${cat.name}`}
+                  >
+                    <Icon size={14} color={cat.color} /> {cat.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </section>
 
         <div style={{ height: '2rem' }}></div>
@@ -252,9 +289,25 @@ function App() {
               </div>
             ))}
           </div>
-          <button className="add-btn" onClick={addExpense}>
-            <Plus size={16} /> Adicionar Nova Conta
-          </button>
+          <div className="quick-add-categories">
+            <p className="quick-add-title">Adicionar gasto rapidamente:</p>
+            <div className="category-chips">
+              {EXPENSE_CATEGORIES.map(cat => {
+                const Icon = cat.icon;
+                return (
+                  <button 
+                    key={cat.id} 
+                    className="category-chip" 
+                    style={{ '--chip-color': cat.color }}
+                    onClick={() => addSpecificExpense(cat.name)}
+                    title={`Adicionar ${cat.name}`}
+                  >
+                    <Icon size={14} color={cat.color} /> {cat.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </section>
       </div>
 

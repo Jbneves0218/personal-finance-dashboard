@@ -322,3 +322,48 @@ button.add-btn:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2); 
 }
+
+/* Category Quick Selection Chips */
+.quick-add-categories {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.quick-add-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.category-chip {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.category-chip:hover {
+  background: rgba(0,0,0,0.1);
+  border-color: var(--chip-color);
+  color: var(--chip-color);
+  transform: translateY(-2px);
+}
+
+[data-theme='dark'] .category-chip:hover {
+  background: rgba(255,255,255,0.05);
+}
