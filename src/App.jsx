@@ -3,7 +3,7 @@ import {
   Plus, Trash2, DollarSign, CreditCard, TrendingUp, WalletCards,
   ShoppingCart, Utensils, Zap, Droplets, Home, Car, Coins,
   CircleDollarSign, FileText, PieChart as PieChartIcon, BarChart2,
-  Sun, Moon
+  Sun, Moon, Lightbulb
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
@@ -170,6 +170,46 @@ function App() {
   const investmentAmount = investmentItem ? (parseFloat(investmentItem.amount) || 0) : 0;
   const investmentGoal = totalIncome * 0.20;
   const investmentProgress = investmentGoal > 0 ? Math.min((investmentAmount / investmentGoal) * 100, 100) : 0;
+
+  // Lógica de Insights Automáticos
+  const generateInsights = () => {
+    if (totalIncome === 0) return [{ type: 'info', text: 'Adicione suas rendas para ver insights financeiros personalizados.' }]
+    
+    const insightsList = []
+    
+    // 1. Regra 50/30/20 - Necessidades (50%)
+    const fixedExpenses = expenses.filter(e => {
+       const n = e.name.toLowerCase()
+       return n.includes('conta') || n.includes('fatura') || n.includes('luz') || n.includes('água') || n.includes('aluguel') || n.includes('alimentação') || n.includes('mercado') || n.includes('pensão');
+    }).reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0)
+    
+    const fixedPercentage = (fixedExpenses / totalIncome) * 100
+    if (fixedPercentage > 55) {
+      insightsList.push({ type: 'warning', text: `Atenção: Seus gastos essenciais estão em ${fixedPercentage.toFixed(0)}% da renda. Pela regra 50/30/20, o ideal é tentar não passar de 50%.` })
+    } else if (fixedPercentage > 0) {
+      insightsList.push({ type: 'success', text: `Controle perfeito! Seus gastos essenciais consomem ${fixedPercentage.toFixed(0)}% da sua renda, dentro do recomendado.` })
+    }
+
+    // 2. Investimentos (20%)
+    if (investmentProgress >= 100) {
+      insightsList.push({ type: 'success', text: 'Excelente! Você atingiu a meta de ouro e guardou ao menos 20% do que ganha.' })
+    } else if (investmentAmount > 0) {
+      insightsList.push({ type: 'info', text: `Você investiu ${((investmentAmount / totalIncome) * 100).toFixed(0)}% da renda até o momento. Tente chegar nos 20%.` })
+    } else {
+      insightsList.push({ type: 'warning', text: 'Nenhum investimento registrado. Pague a si mesmo primeiro! Guarde algo assim que o salário cair.' })
+    }
+
+    // 3. Saúde do Saldo
+    if (balance < 0) {
+      insightsList.push({ type: 'danger', text: 'ALERTA VERMELHO: Você está gastando mais do que arrecada. Revise compras de lazer e cartão de crédito urgentemente!' })
+    } else if (balance > totalIncome * 0.25) {
+      insightsList.push({ type: 'info', text: `Sobrou um bom caixa (${formatCurrency(balance)}). Considere reforçar sua reserva de emergência!` })
+    }
+
+    return insightsList
+  }
+
+  const insights = generateInsights()
 
   return (
     <div className="app-container fade-in">
@@ -413,6 +453,49 @@ function App() {
                   <Bar dataKey="Despesas" fill="#f85149" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </section>
+        )}
+
+        {/* Insights Inteligentes */}
+        {totalIncome > 0 && (
+          <section className="glass-panel dashboard-section" style={{ marginTop: '2rem' }}>
+            <h2 className="panel-title">
+              <Lightbulb size={20} color="#e3b341" />
+              Insights Inteligentes
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              {insights.map((insight, idx) => {
+                let bg, border, textColor;
+                if (insight.type === 'success') {
+                  bg = 'rgba(63, 185, 80, 0.1)'
+                  border = 'rgba(63, 185, 80, 0.3)'
+                  textColor = 'var(--success)'
+                } else if (insight.type === 'warning') {
+                  bg = 'rgba(227, 179, 65, 0.1)'
+                  border = 'rgba(227, 179, 65, 0.3)'
+                  textColor = '#e3b341'
+                } else if (insight.type === 'danger') {
+                  bg = 'rgba(248, 81, 73, 0.1)'
+                  border = 'rgba(248, 81, 73, 0.3)'
+                  textColor = 'var(--danger)'
+                } else {
+                  bg = 'rgba(121, 192, 255, 0.1)'
+                  border = 'rgba(121, 192, 255, 0.3)'
+                  textColor = '#79c0ff'
+                }
+
+                return (
+                  <div key={idx} style={{ 
+                    background: bg, border: `1px solid ${border}`, 
+                    padding: '12px 16px', borderRadius: '8px', 
+                    color: 'var(--text)', fontSize: '0.9rem',
+                    borderLeft: `4px solid ${textColor}`
+                  }}>
+                    {insight.text}
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
