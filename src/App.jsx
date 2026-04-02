@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import {
   Plus, Trash2, DollarSign, CreditCard, TrendingUp, WalletCards,
   ShoppingCart, Utensils, Zap, Droplets, Home, Car, Coins,
-  CircleDollarSign, FileText, PieChart as PieChartIcon, BarChart2
+  CircleDollarSign, FileText, PieChart as PieChartIcon, BarChart2,
+  Sun, Moon
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
@@ -39,6 +40,20 @@ const getIconForCategory = (name) => {
   return <CircleDollarSign size={18} />
 }
 
+const getColorForExpense = (name) => {
+  const n = name.toLowerCase()
+  if (n.includes('investimento') || n.includes('poupança') || n.includes('cripto') || n.includes('ações')) return '#3fb950' // Verde
+  if (n.includes('compra') || n.includes('mercado') || n.includes('loja')) return '#ffa657' // Laranja
+  if (n.includes('conta') || n.includes('obrigatória') || n.includes('fatura') || n.includes('boleto')) return '#f85149' // Vermelho
+  
+  // Cores de fallback para outras categorias caso o usuário crie
+  if (n.includes('alimentação') || n.includes('comida') || n.includes('ifood') || n.includes('restaurante')) return '#d2a8ff' // Roxo claro
+  if (n.includes('carro') || n.includes('transporte') || n.includes('gasolina') || n.includes('uber')) return '#79c0ff' // Azul claro
+  if (n.includes('luz') || n.includes('energia') || n.includes('água') || n.includes('agua')) return '#a5d6ff' // Azul muito claro
+  
+  return '#e3b341' // Amarelo escuro padrão
+}
+
 function App() {
   const [incomes, setIncomes] = useState(() => {
     const saved = localStorage.getItem('finance_incomes')
@@ -50,6 +65,11 @@ function App() {
     return saved ? JSON.parse(saved) : DEFAULT_EXPENSES
   })
 
+  // Theme state
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('finance_theme') || 'dark'
+  })
+
   useEffect(() => {
     localStorage.setItem('finance_incomes', JSON.stringify(incomes))
   }, [incomes])
@@ -57,6 +77,15 @@ function App() {
   useEffect(() => {
     localStorage.setItem('finance_expenses', JSON.stringify(expenses))
   }, [expenses])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('finance_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  }
 
   const totalIncome = incomes.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0)
   const totalExpense = expenses.reduce((acc, item) => acc + (parseFloat(item.amount) || 0), 0)
@@ -122,10 +151,18 @@ function App() {
   const investmentProgress = investmentGoal > 0 ? Math.min((investmentAmount / investmentGoal) * 100, 100) : 0;
 
   return (
-    <div className="app-container">
+    <div className="app-container fade-in">
       {/* Coluna Esquerda: Formulários */}
       <div className="forms-section">
-        <header className="header">
+        <header className="header" style={{ position: 'relative' }}>
+          <button 
+            onClick={toggleTheme} 
+            className="icon-btn" 
+            style={{ position: 'absolute', right: 0, top: 0, padding: '8px', background: 'var(--glass-bg)', borderRadius: '50%', border: '1px solid var(--glass-border)' }}
+            title={theme === 'dark' ? "Modo Claro" : "Modo Noturno"}
+          >
+            {theme === 'dark' ? <Sun size={20} color="#e3b341" /> : <Moon size={20} color="#4a6ee0" />}
+          </button>
           <h1>Simulador de Orçamento</h1>
           <p>Planeje seu mês e acompanhe seu saldo em tempo real.</p>
         </header>
@@ -223,50 +260,28 @@ function App() {
 
       {/* Coluna Direita: Resumo e Dashboards */}
       <div className="right-panels">
-        <section className="glass-panel summary-panel-content">
-          <h2 className="panel-title">
-            <PieChartIcon size={20} color="#d2a8ff" />
+        <section className="glass-panel summary-panel-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <h2 className="panel-title" style={{ width: '100%', justifyContent: 'center', borderBottom: 'none', marginBottom: '0.5rem' }}>
+            <WalletCards size={20} color="var(--primary)" />
             Dashboard do Mês
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div className="summary-item total-income" style={{ margin: 0, padding: '10px', background: 'rgba(63, 185, 80, 0.1)', border: '1px solid rgba(63, 185, 80, 0.2)', borderRadius: '8px' }}>
-              <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                <TrendingUp size={16} /> Entradas
-              </span>
-              <span className="value" style={{ fontSize: '1.1rem' }}>{formatCurrency(totalIncome)}</span>
-            </div>
-            <div className="summary-item total-expense" style={{ margin: 0, padding: '10px', background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: '8px' }}>
-              <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} /> Saídas
-              </span>
-              <span className="value" style={{ fontSize: '1.1rem' }}>{formatCurrency(totalExpense)}</span>
-            </div>
-          </div>
-
-          <div className={`summary-total ${getBalanceClass()}`} style={{ padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-            <h3 style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '4px' }}>Saldo Restante</h3>
-            <div className="balance-value" style={{ fontSize: '1.4rem' }}>
-              {formatCurrency(balance)}
-            </div>
-          </div>
-
-          {/* Gráfico de Rosca: Divisão de Gastos */}
-          {pieData.length > 0 && (
-            <div className="chart-container" style={{ height: 260, marginTop: '2.5rem' }}>
+          {/* Gráfico de Rosca Centralizado */}
+          {pieData.length > 0 ? (
+            <div className="chart-container" style={{ height: 320, width: '100%', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={90}
+                    innerRadius={80}
+                    outerRadius={110}
                     paddingAngle={5}
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={getColorForExpense(entry.name)} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
@@ -274,27 +289,43 @@ function App() {
                     iconType="circle" 
                     layout="horizontal" 
                     verticalAlign="bottom" 
-                    wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                    wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Texto Central do Saldo */}
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Saldo Restante</span>
+                <br />
+                <strong className={getBalanceClass()} style={{ fontSize: '1.4rem' }}>{formatCurrency(balance)}</strong>
+              </div>
+            </div>
+          ) : (
+            <div className={`summary-total ${getBalanceClass()}`} style={{ padding: '12px', borderRadius: '8px', textAlign: 'center', width: '100%', margin: '2rem 0' }}>
+              <h3 style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '4px' }}>Saldo Restante</h3>
+              <div className="balance-value" style={{ fontSize: '1.4rem' }}>
+                {formatCurrency(balance)}
+              </div>
             </div>
           )}
 
           {/* Gráfico de Progresso de Investimento */}
-          <div className="investment-progress" style={{ marginTop: '2.5rem' }}>
+          <div className="investment-progress" style={{ width: '100%', marginTop: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-              <h3 style={{ fontSize: '0.9rem', color: 'var(--text-color)', margin: 0 }}>
+              <h3 style={{ fontSize: '0.9rem', color: 'var(--text)', margin: 0 }}>
                 Meta de Investimento (20% da Renda)
               </h3>
               <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#3fb950' }}>{investmentProgress.toFixed(0)}%</span>
             </div>
             
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', height: '18px', overflow: 'hidden', position: 'relative' }}>
+            <div 
+              className={investmentProgress >= 100 ? "glow-effect" : ""}
+              style={{ background: 'var(--glass-border)', borderRadius: '12px', height: '18px', overflow: 'hidden', position: 'relative' }}
+            >
               <div style={{ 
                 height: '100%', 
                 width: `${investmentProgress}%`, 
-                background: 'linear-gradient(90deg, #2ea043, #3fb950)',
+                background: investmentProgress >= 100 ? '#3fb950' : 'linear-gradient(90deg, #2ea043, #3fb950)',
                 transition: 'width 0.5s ease-in-out',
                 borderRadius: '12px'
               }}></div>
