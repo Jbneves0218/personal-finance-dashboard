@@ -101,17 +101,25 @@ function App() {
   // Custom Tooltip para o PieChart formatando como moeda
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const baseTotal = totalIncome > 0 ? totalIncome : totalExpense;
+      const percentage = baseTotal > 0 ? ((payload[0].value / baseTotal) * 100).toFixed(1) : 0;
+      const baseLabel = totalIncome > 0 ? 'da Renda' : 'do Total';
       return (
         <div className="custom-tooltip" style={{ background: 'rgba(22, 27, 34, 0.9)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <p style={{ margin: 0, fontWeight: 'bold' }}>{payload[0].name}</p>
-          <p style={{ margin: 0, color: payload[0].payload.fill }}>
-            {formatCurrency(payload[0].value)}
+          <p style={{ margin: 0, fontWeight: 'bold', color: '#e6edf3' }}>{payload[0].name}</p>
+          <p style={{ margin: 0, color: payload[0].payload.fill, marginTop: '4px' }}>
+            {formatCurrency(payload[0].value)} ({percentage}% {baseLabel})
           </p>
         </div>
       );
     }
     return null;
   };
+
+  const investmentItem = expenses.find(e => e.name.toLowerCase().includes('investimento'));
+  const investmentAmount = investmentItem ? (parseFloat(investmentItem.amount) || 0) : 0;
+  const investmentGoal = totalIncome * 0.20;
+  const investmentProgress = investmentGoal > 0 ? Math.min((investmentAmount / investmentGoal) * 100, 100) : 0;
 
   return (
     <div className="app-container">
@@ -217,53 +225,97 @@ function App() {
       <div className="right-panels">
         <section className="glass-panel summary-panel-content">
           <h2 className="panel-title">
-            <WalletCards size={20} color="#d2a8ff" />
-            Resumo do Mês
+            <PieChartIcon size={20} color="#d2a8ff" />
+            Dashboard do Mês
           </h2>
 
-          <div className="summary-item total-income">
-            <span className="label">
-              <TrendingUp size={16} />
-              Total de Entradas
-            </span>
-            <span className="value">{formatCurrency(totalIncome)}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="summary-item total-income" style={{ margin: 0, padding: '10px', background: 'rgba(63, 185, 80, 0.1)', border: '1px solid rgba(63, 185, 80, 0.2)', borderRadius: '8px' }}>
+              <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                <TrendingUp size={16} /> Entradas
+              </span>
+              <span className="value" style={{ fontSize: '1.1rem' }}>{formatCurrency(totalIncome)}</span>
+            </div>
+            <div className="summary-item total-expense" style={{ margin: 0, padding: '10px', background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: '8px' }}>
+              <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} /> Saídas
+              </span>
+              <span className="value" style={{ fontSize: '1.1rem' }}>{formatCurrency(totalExpense)}</span>
+            </div>
           </div>
 
-          <div className="summary-item total-expense">
-            <span className="label">
-              <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} />
-              Total de Saídas
-            </span>
-            <span className="value">{formatCurrency(totalExpense)}</span>
-          </div>
-
-          <div className={`summary-total ${getBalanceClass()}`}>
-            <h3>Saldo Restante</h3>
-            <div className="balance-value">
+          <div className={`summary-total ${getBalanceClass()}`} style={{ padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '4px' }}>Saldo Restante</h3>
+            <div className="balance-value" style={{ fontSize: '1.4rem' }}>
               {formatCurrency(balance)}
             </div>
-            {balance < 0 && (
-              <p style={{marginTop: '10px', fontSize: '0.85rem'}}>Atenção: Seu orçamento estourou!</p>
-            )}
-            {balance > 0 && (
-              <p style={{marginTop: '10px', fontSize: '0.85rem'}}>Ótimo: Você está dentro do orçamento. Guarde o restante!</p>
-            )}
+          </div>
+
+          {/* Gráfico de Rosca: Divisão de Gastos */}
+          {pieData.length > 0 && (
+            <div className="chart-container" style={{ height: 260, marginTop: '2.5rem' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    iconType="circle" 
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Gráfico de Progresso de Investimento */}
+          <div className="investment-progress" style={{ marginTop: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+              <h3 style={{ fontSize: '0.9rem', color: 'var(--text-color)', margin: 0 }}>
+                Meta de Investimento (20% da Renda)
+              </h3>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#3fb950' }}>{investmentProgress.toFixed(0)}%</span>
+            </div>
+            
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', height: '18px', overflow: 'hidden', position: 'relative' }}>
+              <div style={{ 
+                height: '100%', 
+                width: `${investmentProgress}%`, 
+                background: 'linear-gradient(90deg, #2ea043, #3fb950)',
+                transition: 'width 0.5s ease-in-out',
+                borderRadius: '12px'
+              }}></div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Atual: {formatCurrency(investmentAmount)}</span>
+              <span>Meta: {formatCurrency(investmentGoal)}</span>
+            </div>
           </div>
         </section>
 
-        {/* Dashboard com Gráficos */}
+        {/* Gráfico Analítico Adicional */}
         {(totalIncome > 0 || totalExpense > 0) && (
           <section className="glass-panel dashboard-section" style={{ marginTop: '2rem' }}>
             <h2 className="panel-title">
-              <PieChartIcon size={20} color="#79c0ff" />
-              Dashboard Analítico
+              <BarChart2 size={20} color="#79c0ff" />
+              Comparativo Analítico
             </h2>
             
             {/* Gráfico de Barras: Entradas x Saídas */}
-            <div className="chart-container" style={{ height: 220, marginBottom: '2rem' }}>
-              <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem', textAlign: 'center' }}>
-                Comparativo Geral
-              </h3>
+            <div className="chart-container" style={{ height: 200, marginBottom: '1rem' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                   <XAxis dataKey="name" stroke="#7d8590" fontSize={12} />
@@ -278,39 +330,6 @@ function App() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
-            {/* Gráfico de Pizza: Divisão de Despesas */}
-            {pieData.length > 0 && (
-              <div className="chart-container" style={{ height: 260 }}>
-                <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>
-                  Distribuição de Despesas
-                </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend 
-                      iconType="circle" 
-                      layout="horizontal" 
-                      verticalAlign="bottom" 
-                      wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </section>
         )}
       </div>
